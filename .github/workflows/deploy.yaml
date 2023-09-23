@@ -1,0 +1,55 @@
+name: Deploy to Cloud Run (development)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  APP_NAME: slog-tracer
+
+jobs:
+  deploy-to-cloud-run:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - region: asia-northeast1
+    environment:
+      name: development
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          workload_identity_provider: ${{ vars.CLOUD_RUN_DEPLOY_PROVIDER }}
+          service_account: ${{ vars.SA_CLOUD_RUN_DEPLOY }}
+
+      - uses: google-github-actions/setup-gcloud@v1
+
+      - uses: ko-build/setup-ko@v0.6
+      - name: Configure docker to use the gcloud cli
+        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev --quiet
+
+      - name: Build and Deploy
+        env:
+          KO_DOCKER_REPO: asia-northeast1-docker.pkg.dev/${{ vars.PROJECT_ID }}/$APP_NAME
+          KO_CONFIG_PATH: .ko.yaml
+        run: |
+          gcloud run deploy $APP_NAME \
+            --region ${{ matrix.region }} \
+            --allow-unauthenticated \
+            --concurrency=default \
+            --cpu=1 \
+            --min-instances=0 \
+            --image $(ko build --platform=linux/amd64 -B) \
+            --quiet
