@@ -15,6 +15,21 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 				AddSource: true,
 				Level:     slog.LevelInfo,
 				Writer:    os.Stdout,
+				ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+					switch a.Key {
+					case slog.LevelKey:
+						a = slog.Attr{
+							Key:   "severity",
+							Value: a.Value,
+						}
+					case slog.SourceKey:
+						a = slog.Attr{
+							Key:   "logging.googleapis.com/sourceLocation",
+							Value: a.Value,
+						}
+					}
+					return a
+				},
 			})
 			l := slog.New(logHandler)
 			l.InfoContext(r.Context(), "request", "method", r.Method, "path", r.URL.Path)

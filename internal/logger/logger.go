@@ -11,16 +11,18 @@ type (
 		handler slog.Handler
 	}
 	Options struct {
-		AddSource bool
-		Level     slog.Level
-		Writer    io.Writer
+		AddSource   bool
+		Level       slog.Level
+		Writer      io.Writer
+		ReplaceAttr func(groups []string, a slog.Attr) slog.Attr
 	}
 )
 
 func NewHandler(o *Options) *Handler {
 	handlerOptions := slog.HandlerOptions{
-		AddSource: o.AddSource,
-		Level:     o.Level,
+		AddSource:   o.AddSource,
+		Level:       o.Level,
+		ReplaceAttr: o.ReplaceAttr,
 	}
 	return &Handler{handler: slog.NewJSONHandler(o.Writer, &handlerOptions)}
 }
