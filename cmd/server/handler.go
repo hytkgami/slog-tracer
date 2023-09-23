@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/hytkgami/slog-tracer/internal/middlewares"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -27,7 +28,7 @@ func Run(ctx context.Context) error {
 
 	s := &http.Server{
 		Addr:    ":" + port,
-		Handler: http.DefaultServeMux,
+		Handler: middlewares.LoggerMiddleware(http.DefaultServeMux),
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)
