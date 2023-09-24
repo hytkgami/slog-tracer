@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
@@ -78,9 +79,17 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		rww := NewResponseWriterWrapper(w, respBuf)
 		next.ServeHTTP(rww, r)
 		go func() {
-			if len(reqBody) > 0 {
-				l.InfoContext(r.Context(), string(reqBody), "method", r.Method, "path", r.URL.Path)
+			if len(reqBody) == 0 {
+				return
 			}
+			buf := bytes.NewBuffer(nil)
+			err := json.Compact(buf, reqBody)
+			if err != nil {
+				l.ErrorContext(r.Context(), "failed to compact request body", "error", err)
+			}
+			l.InfoContext(r.Context(), buf.String(), "method", r.Method, "path", r.URL.Path)
+		}()
+		go func() {
 			l.InfoContext(r.Context(), respBuf.String(), "method", r.Method, "path", r.URL.Path)
 		}()
 	})
