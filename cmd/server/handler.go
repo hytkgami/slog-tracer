@@ -9,6 +9,10 @@ import (
 	"syscall"
 
 	"github.com/hytkgami/slog-tracer/internal/middlewares"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/contrib/propagators/autoprop"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,13 +26,20 @@ func Run(ctx context.Context) error {
 		port = defaultPort
 	}
 
+	tp := trace.NewTracerProvider()
+	defer tp.Shutdown(ctx)
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
+
 	http.Handle("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	}))
 
+	handler := otelhttp.NewHandler(http.DefaultServeMux, "server")
+
 	s := &http.Server{
 		Addr:    ":" + port,
-		Handler: middlewares.LoggerMiddleware(http.DefaultServeMux),
+		Handler: middlewares.LoggerMiddleware(handler),
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)

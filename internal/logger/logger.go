@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"log/slog"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -34,8 +36,15 @@ func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 
 // Handle implements slog.Handler.
 func (h *Handler) Handle(ctx context.Context, record slog.Record) error {
+	sc := trace.SpanContextFromContext(ctx)
+	if sc.IsValid() {
+		record.AddAttrs(
+			slog.String("logging.googleapis.com/trace", sc.TraceID().String()),
+			slog.String("logging.googleapis.com/spanId", sc.SpanID().String()),
+			slog.Bool("logging.googleapis.com/trace_sampled", true),
+		)
+	}
 	record.AddAttrs(
-		slog.Bool("logging.googleapis.com/trace_sampled", true),
 		slog.Group("logging.googleapis.com/labels",
 			slog.String("uid", "1234567890"),
 		),
