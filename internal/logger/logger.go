@@ -41,7 +41,7 @@ func (h *Handler) Handle(ctx context.Context, record slog.Record) error {
 		record.AddAttrs(
 			slog.String("logging.googleapis.com/trace", sc.TraceID().String()),
 			slog.String("logging.googleapis.com/spanId", sc.SpanID().String()),
-			slog.Bool("logging.googleapis.com/trace_sampled", true),
+			slog.Bool("logging.googleapis.com/trace_sampled", sc.TraceFlags().IsSampled()),
 		)
 	}
 	record.AddAttrs(

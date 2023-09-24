@@ -31,15 +31,15 @@ func Run(ctx context.Context) error {
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
-	http.Handle("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.Handle("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	}))
 
-	handler := otelhttp.NewHandler(http.DefaultServeMux, "server")
-
+	handler := otelhttp.NewHandler(middlewares.LoggerMiddleware(mux), "server")
 	s := &http.Server{
 		Addr:    ":" + port,
-		Handler: middlewares.LoggerMiddleware(handler),
+		Handler: handler,
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)
