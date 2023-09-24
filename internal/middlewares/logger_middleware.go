@@ -27,6 +27,11 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 							Key:   "logging.googleapis.com/sourceLocation",
 							Value: a.Value,
 						}
+					case slog.MessageKey:
+						a = slog.Attr{
+							Key:   "message",
+							Value: a.Value,
+						}
 					}
 					return a
 				},
