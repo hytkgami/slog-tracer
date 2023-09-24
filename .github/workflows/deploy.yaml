@@ -51,4 +51,5 @@ jobs:
             --cpu=1 \
             --min-instances=0 \
             --image $(ko build --platform=linux/amd64 -B ./cmd) \
+            --set-env-vars "GOOGLE_CLOUD_PROJECT=${{ vars.PROJECT_ID }}" \
             --quiet
