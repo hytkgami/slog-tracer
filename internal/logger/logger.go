@@ -34,6 +34,9 @@ func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 
 // Handle implements slog.Handler.
 func (h *Handler) Handle(ctx context.Context, record slog.Record) error {
+	record.AddAttrs(
+		slog.Bool("logging.googleapis.com/trace_sampled", true),
+	)
 	return h.handler.Handle(ctx, record)
 }
 
