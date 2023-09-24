@@ -42,7 +42,7 @@ func (h *Handler) Handle(ctx context.Context, record slog.Record) error {
 	l := label{UID: "1234567890"}
 	b, err := json.Marshal(l)
 	if err != nil {
-		return h.handler.Handle(ctx, record)
+		return err
 	}
 	record.AddAttrs(
 		slog.Bool("logging.googleapis.com/trace_sampled", true),
