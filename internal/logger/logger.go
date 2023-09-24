@@ -2,7 +2,6 @@ package logger
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"log/slog"
 )
@@ -35,18 +34,11 @@ func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 
 // Handle implements slog.Handler.
 func (h *Handler) Handle(ctx context.Context, record slog.Record) error {
-	type label struct {
-		UID string `json:"uid"`
-	}
-	// TODO: Use real UID.
-	l := label{UID: "1234567890"}
-	b, err := json.Marshal(l)
-	if err != nil {
-		return err
-	}
 	record.AddAttrs(
 		slog.Bool("logging.googleapis.com/trace_sampled", true),
-		slog.String("logging.googleapis.com/labels", string(b)),
+		slog.Group("logging.googleapis.com/labels",
+			slog.String("uid", "1234567890"),
+		),
 	)
 	return h.handler.Handle(ctx, record)
 }
