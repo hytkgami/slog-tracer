@@ -2,8 +2,10 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
+	"os"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -38,8 +40,9 @@ func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 func (h *Handler) Handle(ctx context.Context, record slog.Record) error {
 	sc := trace.SpanContextFromContext(ctx)
 	if sc.IsValid() {
+		trace := fmt.Sprintf("projects/%s/traces/%s", os.Getenv("GOOGLE_CLOUD_PROJECT"), sc.TraceID().String())
 		record.AddAttrs(
-			slog.String("logging.googleapis.com/trace", sc.TraceID().String()),
+			slog.String("logging.googleapis.com/trace", trace),
 			slog.String("logging.googleapis.com/spanId", sc.SpanID().String()),
 			slog.Bool("logging.googleapis.com/trace_sampled", sc.TraceFlags().IsSampled()),
 		)
